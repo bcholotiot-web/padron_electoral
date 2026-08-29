@@ -1,0 +1,30 @@
+### Listar todos
+GET http://localhost:8080/api/padron-electoral
+
+### Crear un registro
+POST http://localhost:8080/api/padron-electoral
+Content-Type: application/json
+
+{
+  "cui": "1234567890101",
+  "nombre": "Ana",
+  "apellido": "López",
+  "departamento": "Guatemala",
+  "municipio": "Mixco"
+}
+
+### Actualizar (cambia el 1 por el id real)
+PUT http://localhost:8080/api/padron-electoral/1
+Content-Type: application/json
+
+{
+  "cui": "1234567890101",
+  "nombre": "Ana María",
+  "apellido": "López",
+  "departamento": "Guatemala",
+  "municipio": "Mixco"
+}
+
+### Eliminar (cambia el 1 por el id real)
+DELETE http://localhost:8080/api/padron-electoral/1
+

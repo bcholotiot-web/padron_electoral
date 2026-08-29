@@ -1,0 +1,13 @@
+POST http://localhost:8080/api/padron-electoral
+Content-Type: application/json
+
+{
+  "cui": "9876543210123",
+  "nombre": "Usuario",
+  "apellido": "Prueba",
+  "correo": "correo@ejemplo.com",
+  "departamentoId": 1,
+  "municipioId": 33,
+  "centroVotacionId": 4,
+  "mesaVotacionId": 1
+}

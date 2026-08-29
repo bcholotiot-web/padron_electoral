@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react'
 import FormularioPadron from './components/FormularioPadron'
 import TablaPadron from './components/TablaPadron'
+import { LogIn } from 'lucide-react'
+import LoginModal from './components/LoginModal'
+import MiPadron from './components/MiPadron'
+import {
+    cerrarSesion,
+    existeSesion
+} from './services/api'
+
 
 interface PadronElectoral {
     id: number
@@ -31,7 +39,11 @@ export default function App() {
     const [registros, setRegistros] = useState<PadronElectoral[]>([])
     const [loading, setLoading] = useState(false)
     const [registroEditando, setRegistroEditando] = useState<PadronElectoral | null>(null)
+    const [loginAbierto, setLoginAbierto] =
+        useState(false)
 
+    const [sesionIniciada, setSesionIniciada] =
+        useState(existeSesion())
     const cargarRegistros = async () => {
         setLoading(true)
 
@@ -52,13 +64,63 @@ export default function App() {
     }
 
     useEffect(() => {
-        cargarRegistros()
+        const manejarSesionExpirada = () => {
+            cerrarSesion()
+            setSesionIniciada(false)
+            setLoginAbierto(true)
+        }
+
+        window.addEventListener(
+            'sesion-expirada',
+            manejarSesionExpirada
+        )
+
+        return () => {
+            window.removeEventListener(
+                'sesion-expirada',
+                manejarSesionExpirada
+            )
+        }
     }, [])
+
+    if (sesionIniciada) {
+        return (
+            <MiPadron
+                onCerrarSesion={() => {
+                    cerrarSesion()
+                    setSesionIniciada(false)
+                }}
+            />
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-6xl mx-auto px-4 py-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Padrón Electoral</h1>
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold text-gray-900">
+                            Padrón Electoral
+                        </h1>
+
+                        <p className="mt-2 text-gray-600">
+                            Gestiona tu registro y consulta tu lugar
+                            de votación.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            console.log('Abriendo formulario de sesión')
+                            setLoginAbierto(true)
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800"
+                    >
+                        <LogIn size={18} />
+                        Iniciar sesión
+                    </button>
+                </div>
                 <p className="text-gray-600 mb-8">Gestiona los registros del padrón electoral</p>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -76,9 +138,20 @@ export default function App() {
                             onRegistroEliminado={cargarRegistros}
                             onEditar={setRegistroEditando}
                         />
+
                     </div>
                 </div>
             </div>
+            <LoginModal
+                abierto={loginAbierto}
+                onCerrar={() =>
+                    setLoginAbierto(false)
+                }
+                onLoginCorrecto={() => {
+                    setLoginAbierto(false)
+                    setSesionIniciada(true)
+                }}
+            />
         </div>
     )
 }

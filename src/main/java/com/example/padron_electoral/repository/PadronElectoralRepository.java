@@ -12,6 +12,8 @@ public interface PadronElectoralRepository
 
     boolean existsByCui(String cui);
 
+    Optional<PadronElectoral> findByCui(String cui);
+
     @Query("""
             SELECT MAX(p.numeroLista)
             FROM PadronElectoral p

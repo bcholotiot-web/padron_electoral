@@ -41,6 +41,8 @@ export default function FormularioPadron({ onRegistroCreado, registroEditando }:
         nombre: '',
         apellido: '',
         correo: '',
+        password: '',
+        confirmarPassword: '',
         departamento: '',
         municipio: '',
         centroVotacion: '',
@@ -145,6 +147,7 @@ export default function FormularioPadron({ onRegistroCreado, registroEditando }:
             nombre: formData.nombre.trim(),
             apellido: formData.apellido.trim(),
             correo: formData.correo.trim(),
+            password: formData.password,
             departamentoId: Number(formData.departamento),
             municipioId: Number(formData.municipio),
             centroVotacionId: Number(formData.centroVotacion),
@@ -191,6 +194,8 @@ export default function FormularioPadron({ onRegistroCreado, registroEditando }:
                 nombre: '',
                 apellido: '',
                 correo: '',
+                password: '',
+                confirmarPassword: '',
                 departamento: '',
                 municipio: '',
                 centroVotacion: '',
@@ -253,6 +258,30 @@ export default function FormularioPadron({ onRegistroCreado, registroEditando }:
                     onChange={handleChange}
                     required
                     autoComplete="email"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Contraseña"
+                    value={formData.password}
+                    onChange={handleChange}
+                    minLength={8}
+                    autoComplete="new-password"
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+
+                <input
+                    type="password"
+                    name="confirmarPassword"
+                    placeholder="Confirmar contraseña"
+                    value={formData.confirmarPassword}
+                    onChange={handleChange}
+                    minLength={8}
+                    autoComplete="new-password"
+                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
 

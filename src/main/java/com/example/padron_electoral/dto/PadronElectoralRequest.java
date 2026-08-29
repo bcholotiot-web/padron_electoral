@@ -9,7 +9,7 @@ public class PadronElectoralRequest {
     private String nombre;
     private String apellido;
     private String correo;
-
+    private String password;
     private Long departamentoId;
     private Long municipioId;
     private Long centroVotacionId;

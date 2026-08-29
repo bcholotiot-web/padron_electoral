@@ -2,18 +2,13 @@ package com.example.padron_electoral.service;
 
 import com.example.padron_electoral.dto.PadronElectoralRequest;
 import com.example.padron_electoral.dto.PadronElectoralResponse;
-import com.example.padron_electoral.model.CentroVotacion;
-import com.example.padron_electoral.model.Departamento;
-import com.example.padron_electoral.model.MesaVotacion;
-import com.example.padron_electoral.model.Municipio;
-import com.example.padron_electoral.model.PadronElectoral;
-import com.example.padron_electoral.repository.CentroVotacionRepository;
-import com.example.padron_electoral.repository.DepartamentoRepository;
-import com.example.padron_electoral.repository.MesaVotacionRepository;
-import com.example.padron_electoral.repository.MunicipioRepository;
-import com.example.padron_electoral.repository.PadronElectoralRepository;
+import com.example.padron_electoral.model.*;
+import com.example.padron_electoral.repository.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,13 +22,15 @@ public class PadronElectoralService {
     private final CentroVotacionRepository centroRepository;
     private final MesaVotacionRepository mesaRepository;
     private final CorreoService correoService;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public PadronElectoralService(
             PadronElectoralRepository padronRepository,
             DepartamentoRepository departamentoRepository,
             MunicipioRepository municipioRepository,
             CentroVotacionRepository centroRepository,
-            MesaVotacionRepository mesaRepository, CorreoService correoService
+            MesaVotacionRepository mesaRepository, CorreoService correoService, UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder
     ) {
         this.padronRepository = padronRepository;
         this.departamentoRepository = departamentoRepository;
@@ -41,6 +38,8 @@ public class PadronElectoralService {
         this.centroRepository = centroRepository;
         this.mesaRepository = mesaRepository;
         this.correoService = correoService;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -147,8 +146,23 @@ public class PadronElectoralService {
         registro.setEstado("A");
         registro.setFechaRegistro(OffsetDateTime.now());
 
-        PadronElectoral guardado =
-                padronRepository.save(registro);
+        PadronElectoral guardado = padronRepository.save(registro);
+
+        Usuario usuario = new Usuario();
+
+        usuario.setUsername(guardado.getCui());
+
+        usuario.setPassword(
+                passwordEncoder.encode(
+                        request.getPassword()
+                )
+        );
+
+        usuario.setEstado("A");
+        usuario.setPadron(guardado);
+        usuario.setFechaCreacion(OffsetDateTime.now());
+
+        usuarioRepository.save(usuario);
 
         try {
             correoService.enviarInformacionElectoral(guardado);
@@ -174,9 +188,25 @@ public class PadronElectoralService {
         return convertirAResponse(guardado);
     }
 
+    @Transactional(readOnly = true)
+    public PadronElectoralResponse obtenerPorId(Long id) {
+
+        PadronElectoral registro = padronRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No se encontró el registro del padrón con id: "
+                                        + id
+                        )
+                );
+
+        return convertirAResponse(registro);
+    }
+
     private void validarSolicitud(
             PadronElectoralRequest request
     ) {
+
         if (request == null) {
             throw new IllegalArgumentException(
                     "No se recibieron datos del registro"
@@ -228,6 +258,17 @@ public class PadronElectoralService {
         if (request.getMesaVotacionId() == null) {
             throw new IllegalArgumentException(
                     "Debe seleccionar una mesa de votación"
+            );
+        }
+        if (esVacio(request.getPassword())) {
+            throw new IllegalArgumentException(
+                    "La contraseña es obligatoria"
+            );
+        }
+
+        if (request.getPassword().length() < 8) {
+            throw new IllegalArgumentException(
+                    "La contraseña debe tener al menos 8 caracteres"
             );
         }
     }
@@ -301,13 +342,17 @@ public class PadronElectoralService {
         }
     }
 
-    private PadronElectoralResponse convertirAResponse(
-            PadronElectoral registro
-    ) {
+    private PadronElectoralResponse convertirAResponse(PadronElectoral registro) {
         Long departamentoId = null;
         Long municipioId = null;
         Long centroId = null;
         Long mesaId = null;
+
+        String departamentoNombre =
+                registro.getDepartamento();
+
+        String municipioNombre =
+                registro.getMunicipio();
 
         String centroNombre = null;
         String mesaNombre = null;
@@ -315,11 +360,17 @@ public class PadronElectoralService {
         if (registro.getDepartamentoRelacion() != null) {
             departamentoId =
                     registro.getDepartamentoRelacion().getId();
+
+            departamentoNombre =
+                    registro.getDepartamentoRelacion().getNombre();
         }
 
         if (registro.getMunicipioRelacion() != null) {
             municipioId =
                     registro.getMunicipioRelacion().getId();
+
+            municipioNombre =
+                    registro.getMunicipioRelacion().getNombre();
         }
 
         if (registro.getCentroVotacion() != null) {
@@ -346,10 +397,10 @@ public class PadronElectoralService {
                 registro.getCorreo(),
 
                 departamentoId,
-                registro.getDepartamento(),
+                departamentoNombre,
 
                 municipioId,
-                registro.getMunicipio(),
+                municipioNombre,
 
                 centroId,
                 centroNombre,
